@@ -663,15 +663,20 @@ export function useNotes(): Note[] {
   return result ?? []
 }
 
-export async function addNote(title: string, body: string): Promise<number> {
+export function addNote(title: string, body: string): Promise<number> {
   const now = Date.now()
-  return db.notes.add({ title, body, createdAt: now, updatedAt: now })
+  return db.notes.add({ title, body, createdAt: now, updatedAt: now }) as Promise<number>
 }
 
 export function deleteNote(id: number): Promise<void> {
   return db.notes.delete(id)
 }
 ```
+
+> Note zur `as Promise<number>`-Cast: Weil `Note.id` als `id?: number` deklariert ist, leitet
+> Dexie 4 für `EntityTable<Note, 'id'>.add()` den Rückgabetyp `Promise<number | undefined>`
+> her. Der Cast verengt das wieder auf `Promise<number>` — `add()` gibt zur Laufzeit immer
+> die generierte ID zurück.
 
 - [ ] **Step 4: Tests ausführen**
 

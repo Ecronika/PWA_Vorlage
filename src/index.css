@@ -5,7 +5,9 @@
   --color-brand-600: oklch(0.48 0.16 260);
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 body {

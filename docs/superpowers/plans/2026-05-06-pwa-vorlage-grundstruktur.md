@@ -205,16 +205,22 @@ git commit -m "chore: bootstrap pwa-vorlage with deps and tsconfig"
 ```ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+
+const projectRoot = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') }
+    alias: { '@': path.resolve(projectRoot, 'src') }
   },
   server: { host: true }
 })
 ```
+
+> Note: `__dirname` is not defined in ESM. Resolving the project root via
+> `import.meta.url` is the portable, idiomatic ESM pattern.
 
 - [ ] **Step 2: `index.html`**
 
@@ -1048,7 +1054,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+
+const projectRoot = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [
@@ -1088,7 +1097,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') },
+    alias: { '@': path.resolve(projectRoot, 'src') },
   },
   server: { host: true },
   test: {

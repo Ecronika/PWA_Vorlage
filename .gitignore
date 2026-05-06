@@ -8,3 +8,5 @@ dist-ssr
 .idea
 *.log
 coverage
+*.tsbuildinfo
+*.d.ts

@@ -150,13 +150,15 @@
     "moduleResolution": "bundler",
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": true,
+    "emitDeclarationOnly": true,
     "composite": true,
     "allowSyntheticDefaultImports": true
   },
   "include": ["vite.config.ts"]
 }
 ```
+
+> Note: composite projects must emit; `emitDeclarationOnly: true` prevents JS output (Vite already handles that) while keeping the `.tsbuildinfo` + `.d.ts` artifacts that `composite` requires. Those artifacts are gitignored in Step 4.
 
 - [ ] **Step 4: `.gitignore` anlegen**
 
@@ -171,6 +173,8 @@ dist-ssr
 .idea
 *.log
 coverage
+*.tsbuildinfo
+*.d.ts
 ```
 
 - [ ] **Step 5: `npm install` ausführen**

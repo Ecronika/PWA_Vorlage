@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
@@ -12,4 +13,10 @@ export default defineConfig({
     alias: { '@': path.resolve(projectRoot, 'src') },
   },
   server: { host: true },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    css: true,
+  },
 });

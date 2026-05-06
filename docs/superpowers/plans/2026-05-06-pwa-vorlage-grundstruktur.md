@@ -1253,10 +1253,7 @@ export function UpdateBanner() {
   if (!needRefresh) return null
 
   return (
-    <div
-      role="status"
-      className="flex items-center justify-between gap-3 rounded-lg bg-brand-500 px-4 py-3 text-white"
-    >
+    <output className="flex items-center justify-between gap-3 rounded-lg bg-brand-500 px-4 py-3 text-white">
       <span>Neue Version verfügbar.</span>
       <div className="flex gap-2">
         <button
@@ -1275,10 +1272,14 @@ export function UpdateBanner() {
           ✕
         </button>
       </div>
-    </div>
+    </output>
   )
 }
 ```
+
+> Note: `<output>` ist das semantisch korrekte HTML5-Element für eine Status-Region
+> (impliziter `role="status"`). Biomes `useSemanticElements`-Regel verbietet
+> redundantes `role="status"` auf einem `<div>`.
 
 - [ ] **Step 3: `src/App.tsx` um Banner erweitern**
 

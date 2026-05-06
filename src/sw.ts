@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { ExpirationPlugin } from 'workbox-expiration';
-import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
+import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { StaleWhileRevalidate } from 'workbox-strategies';
 
@@ -20,8 +20,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(
   new NavigationRoute(
     async () => {
-      const cache = await caches.open('workbox-precache-v2');
-      const match = await cache.match('/index.html', { ignoreSearch: true });
+      const match = await matchPrecache('/index.html');
       return match ?? Response.error();
     },
     { allowlist: [/^\/(?!api).*/] }

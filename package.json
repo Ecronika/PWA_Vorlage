@@ -12,6 +12,7 @@
     "test:run": "vitest run",
     "lint": "biome check .",
     "format": "biome format --write .",
+    "gen:icons": "node scripts/gen-placeholder-icons.mjs",
     "docker:build": "docker build -t pwa-vorlage .",
     "docker:up": "docker compose up -d --build"
   },

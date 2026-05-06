@@ -1141,10 +1141,10 @@ git commit -m "feat(pwa): manifest + placeholder icons"
 
 ```ts
 /// <reference lib="webworker" />
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
-import { registerRoute, NavigationRoute } from 'workbox-routing'
-import { StaleWhileRevalidate } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
+import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { StaleWhileRevalidate } from 'workbox-strategies'
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>
@@ -1162,8 +1162,7 @@ precacheAndRoute(self.__WB_MANIFEST)
 registerRoute(
   new NavigationRoute(
     async () => {
-      const cache = await caches.open('workbox-precache-v2')
-      const match = await cache.match('/index.html', { ignoreSearch: true })
+      const match = await matchPrecache('/index.html')
       return match ?? Response.error()
     },
     { allowlist: [/^\/(?!api).*/] }
@@ -1347,7 +1346,7 @@ git commit -m "feat(pwa): update prompt banner"
   file_server
   encode gzip zstd
 
-  @sw path /sw.js /registerSW.js
+  @sw path /sw.js /registerSW.js /manifest.webmanifest
   header @sw Cache-Control "no-cache"
 
   @assets path *.js *.css *.woff2 *.png *.svg *.webp
@@ -1366,7 +1365,7 @@ git commit -m "feat(pwa): update prompt banner"
   file_server
   encode gzip zstd
 
-  @sw path /sw.js /registerSW.js
+  @sw path /sw.js /registerSW.js /manifest.webmanifest
   header @sw Cache-Control "no-cache"
 
   @assets path *.js *.css *.woff2 *.png *.svg *.webp

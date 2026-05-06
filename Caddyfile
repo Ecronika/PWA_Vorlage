@@ -8,7 +8,7 @@
   file_server
   encode gzip zstd
 
-  @sw path /sw.js /registerSW.js
+  @sw path /sw.js /registerSW.js /manifest.webmanifest
   header @sw Cache-Control "no-cache"
 
   @assets path *.js *.css *.woff2 *.png *.svg *.webp
@@ -27,7 +27,7 @@
   file_server
   encode gzip zstd
 
-  @sw path /sw.js /registerSW.js
+  @sw path /sw.js /registerSW.js /manifest.webmanifest
   header @sw Cache-Control "no-cache"
 
   @assets path *.js *.css *.woff2 *.png *.svg *.webp

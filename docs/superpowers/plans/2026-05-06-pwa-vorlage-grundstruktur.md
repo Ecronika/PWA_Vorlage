@@ -409,15 +409,17 @@ git commit -m "feat: integrate tailwind v4 with brand tokens"
 }
 ```
 
-- [ ] **Step 2: Lint ausführen**
+- [ ] **Step 2: Initial-Cleanup mit `biome check --write`**
+
+`biome format` korrigiert nur Whitespace; Import-Reihenfolge ist ein Lint-Check, der separat ausgeführt werden muss. Einmalig beides in einem Lauf:
+
+Run: `npx biome check --write .`
+Expected: meldet wie viele Dateien gefixt wurden (z.B. Semikolons ergänzt, Imports sortiert). Anschließend zeigt `git diff` rein stilistische Änderungen.
+
+- [ ] **Step 3: Lint-Check ohne Schreibzugriff**
 
 Run: `npm run lint`
-Expected: Keine Fehler, ggf. Warnungen ohne Build-Bruch.
-
-- [ ] **Step 3: Format ausführen**
-
-Run: `npm run format`
-Expected: Dateien werden ggf. einheitlich formatiert; danach `git diff` prüfen.
+Expected: exit 0, keine Fehler. (Falls Fehler bleiben, in Step 2 wurde nicht alles gefixt — investigieren statt erneut blind --write laufen lassen.)
 
 - [ ] **Step 4: Commit**
 

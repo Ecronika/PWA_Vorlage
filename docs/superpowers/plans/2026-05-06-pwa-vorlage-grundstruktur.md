@@ -150,13 +150,15 @@
     "moduleResolution": "bundler",
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": true,
+    "emitDeclarationOnly": true,
     "composite": true,
     "allowSyntheticDefaultImports": true
   },
   "include": ["vite.config.ts"]
 }
 ```
+
+> Note: composite projects must emit; `emitDeclarationOnly: true` prevents JS output (Vite already handles that) while keeping the `.tsbuildinfo` + `.d.ts` artifacts that `composite` requires. Those artifacts are gitignored in Step 4.
 
 - [ ] **Step 4: `.gitignore` anlegen**
 
@@ -171,6 +173,8 @@ dist-ssr
 .idea
 *.log
 coverage
+*.tsbuildinfo
+*.d.ts
 ```
 
 - [ ] **Step 5: `npm install` ausführen**
@@ -201,16 +205,22 @@ git commit -m "chore: bootstrap pwa-vorlage with deps and tsconfig"
 ```ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+
+const projectRoot = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') }
+    alias: { '@': path.resolve(projectRoot, 'src') }
   },
   server: { host: true }
 })
 ```
+
+> Note: `__dirname` is not defined in ESM. Resolving the project root via
+> `import.meta.url` is the portable, idiomatic ESM pattern.
 
 - [ ] **Step 2: `index.html`**
 
@@ -399,15 +409,17 @@ git commit -m "feat: integrate tailwind v4 with brand tokens"
 }
 ```
 
-- [ ] **Step 2: Lint ausführen**
+- [ ] **Step 2: Initial-Cleanup mit `biome check --write`**
+
+`biome format` korrigiert nur Whitespace; Import-Reihenfolge ist ein Lint-Check, der separat ausgeführt werden muss. Einmalig beides in einem Lauf:
+
+Run: `npx biome check --write .`
+Expected: meldet wie viele Dateien gefixt wurden (z.B. Semikolons ergänzt, Imports sortiert). Anschließend zeigt `git diff` rein stilistische Änderungen.
+
+- [ ] **Step 3: Lint-Check ohne Schreibzugriff**
 
 Run: `npm run lint`
-Expected: Keine Fehler, ggf. Warnungen ohne Build-Bruch.
-
-- [ ] **Step 3: Format ausführen**
-
-Run: `npm run format`
-Expected: Dateien werden ggf. einheitlich formatiert; danach `git diff` prüfen.
+Expected: exit 0, keine Fehler. (Falls Fehler bleiben, in Step 2 wurde nicht alles gefixt — investigieren statt erneut blind --write laufen lassen.)
 
 - [ ] **Step 4: Commit**
 
@@ -651,15 +663,20 @@ export function useNotes(): Note[] {
   return result ?? []
 }
 
-export async function addNote(title: string, body: string): Promise<number> {
+export function addNote(title: string, body: string): Promise<number> {
   const now = Date.now()
-  return db.notes.add({ title, body, createdAt: now, updatedAt: now })
+  return db.notes.add({ title, body, createdAt: now, updatedAt: now }) as Promise<number>
 }
 
 export function deleteNote(id: number): Promise<void> {
   return db.notes.delete(id)
 }
 ```
+
+> Note zur `as Promise<number>`-Cast: Weil `Note.id` als `id?: number` deklariert ist, leitet
+> Dexie 4 für `EntityTable<Note, 'id'>.add()` den Rückgabetyp `Promise<number | undefined>`
+> her. Der Cast verengt das wieder auf `Promise<number>` — `add()` gibt zur Laufzeit immer
+> die generierte ID zurück.
 
 - [ ] **Step 4: Tests ausführen**
 
@@ -1044,7 +1061,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+
+const projectRoot = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [
@@ -1084,7 +1104,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') },
+    alias: { '@': path.resolve(projectRoot, 'src') },
   },
   server: { host: true },
   test: {
@@ -1121,10 +1141,10 @@ git commit -m "feat(pwa): manifest + placeholder icons"
 
 ```ts
 /// <reference lib="webworker" />
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
-import { registerRoute, NavigationRoute } from 'workbox-routing'
-import { StaleWhileRevalidate } from 'workbox-strategies'
 import { ExpirationPlugin } from 'workbox-expiration'
+import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching'
+import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { StaleWhileRevalidate } from 'workbox-strategies'
 
 declare const self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision: string | null }>
@@ -1142,8 +1162,7 @@ precacheAndRoute(self.__WB_MANIFEST)
 registerRoute(
   new NavigationRoute(
     async () => {
-      const cache = await caches.open('workbox-precache-v2')
-      const match = await cache.match('/index.html', { ignoreSearch: true })
+      const match = await matchPrecache('/index.html')
       return match ?? Response.error()
     },
     { allowlist: [/^\/(?!api).*/] }
@@ -1233,10 +1252,7 @@ export function UpdateBanner() {
   if (!needRefresh) return null
 
   return (
-    <div
-      role="status"
-      className="flex items-center justify-between gap-3 rounded-lg bg-brand-500 px-4 py-3 text-white"
-    >
+    <output className="flex items-center justify-between gap-3 rounded-lg bg-brand-500 px-4 py-3 text-white">
       <span>Neue Version verfügbar.</span>
       <div className="flex gap-2">
         <button
@@ -1255,10 +1271,14 @@ export function UpdateBanner() {
           ✕
         </button>
       </div>
-    </div>
+    </output>
   )
 }
 ```
+
+> Note: `<output>` ist das semantisch korrekte HTML5-Element für eine Status-Region
+> (impliziter `role="status"`). Biomes `useSemanticElements`-Regel verbietet
+> redundantes `role="status"` auf einem `<div>`.
 
 - [ ] **Step 3: `src/App.tsx` um Banner erweitern**
 
@@ -1326,7 +1346,7 @@ git commit -m "feat(pwa): update prompt banner"
   file_server
   encode gzip zstd
 
-  @sw path /sw.js /registerSW.js
+  @sw path /sw.js /registerSW.js /manifest.webmanifest
   header @sw Cache-Control "no-cache"
 
   @assets path *.js *.css *.woff2 *.png *.svg *.webp
@@ -1345,7 +1365,7 @@ git commit -m "feat(pwa): update prompt banner"
   file_server
   encode gzip zstd
 
-  @sw path /sw.js /registerSW.js
+  @sw path /sw.js /registerSW.js /manifest.webmanifest
   header @sw Cache-Control "no-cache"
 
   @assets path *.js *.css *.woff2 *.png *.svg *.webp
